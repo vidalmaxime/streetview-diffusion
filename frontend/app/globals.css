@@ -1,0 +1,140 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 251, 252, 251;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.pac-container {
+  border: 1px solid black;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-top: 4px;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.pac-container::after {
+  display: none !important;
+}
+
+.pac-icon {
+  display: none !important;
+}
+.gm-style iframe + div {
+  border-color: #ff5c00 !important;
+  border-radius: 10px;
+}
+
+.psv-navbar {
+  opacity: 0 !important;
+}
+
+img[alt="Google"] {
+  display: none !important;
+}
+
+div [class="gmnoprint"] {
+  display: none !important;
+}
+
+div [class="gm-style-cc"] {
+  display: none !important;
+}
+
+div [class="gmnoprint gm-style-cc"] {
+  display: none !important;
+}
+
+@layer components {
+  .dot {
+    @apply aspect-square flex-1 transform-gpu bg-transparent ring-transparent transition-all delay-75 duration-[2000ms] hover:scale-[1] hover:rounded-full hover:bg-pink-500/100 hover:ring-[5px] hover:ring-pink-500/100 hover:delay-0 hover:duration-0;
+  }
+
+  .shadow {
+    box-shadow: 0px 25px 54.3px 0px rgba(255, 255, 255, 0.11) inset,
+      0px -11px 24.5px 0px rgba(0, 0, 0, 0.25) inset,
+      0px 0px 0px 3px rgba(255, 255, 255, 0.03) inset,
+      0px 4px 20px 0px rgba(0, 0, 0, 0.3);
+  }
+  .grid-pattern {
+    mix-blend-mode: screen;
+    filter: invert();
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='35' height='35'%3E%3Crect width='35' height='35' fill='%23fff' /%3E%3Crect x='50%' width='1' height='100%' fill='%23ddd' /%3E%3Crect y='50%' width='100%' height='1' fill='%23ddd' /%3E%3C/svg%3E%0A");
+  }
+  body {
+    filter: brightness(1.1) contrast(1.01);
+  }
+}
+
+.threeDScene {
+  background-image: radial-gradient(
+    circle farthest-corner at 75% 75%,
+    rgba(0, 0, 16, 1) 0%,
+    rgba(0, 16, 32, 1) 50%,
+    rgba(0, 64, 48, 1) 100%
+  );
+  border-radius: 100%;
+  color: rgb(32, 220, 128);
+  font-family: "Inconsolata", monospace;
+  font-size: 3vmin;
+  line-height: 0.55em;
+  text-rendering: optimizeSpeed;
+  will-change: contents;
+  white-space: pre;
+}
+
+canvas {
+  display: none;
+}
+
+.blur-edges {
+  position: relative;
+}
+
+.blur-edges::before,
+.blur-edges::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  z-index: 2;
+}
+
+.blur-edges::before {
+  left: 0;
+  background: linear-gradient(to right, white, rgba(255, 255, 255, 0));
+}
+
+.blur-edges::after {
+  right: 0;
+  background: linear-gradient(to left, white, rgba(255, 255, 255, 0));
+}

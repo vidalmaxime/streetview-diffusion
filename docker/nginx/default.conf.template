@@ -1,0 +1,35 @@
+# HTTPS for the app
+map $request_method $limit {
+    default         "";
+    POST            $binary_remote_addr;
+  }
+limit_req_zone $limit zone=reqlimit:10m rate=3r/m;
+
+server {
+    listen                  ${APP_PORT_INTERNAL_HTTPS} ssl;
+    listen                  [::]:${APP_PORT_INTERNAL_HTTPS} ssl;
+    server_name             ${DOMAIN_NAME};
+    ssl_certificate         /root/ssl/cert.pem;
+    ssl_certificate_key     /root/ssl/key.pem;
+    root                    /app/build/;
+
+    client_max_body_size 50m;
+
+    location / {
+        proxy_pass ${REST_APP_URL_INTERNAL};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    location /process-image {
+        limit_req zone=reqlimit;
+        proxy_pass ${REST_APP_URL_INTERNAL};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+}

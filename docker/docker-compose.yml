@@ -1,0 +1,189 @@
+services:
+  nvidia-mig-parted:
+    image: library/alpine
+    command: sh -c "exec chroot /host /usr/bin/nvidia-mig-parted apply"
+    volumes:
+      - "/:/host"
+    environment:
+      - MIG_PARTED_DEBUG=false
+      - MIG_PARTED_HOOKS_FILE=/etc/nvidia-mig-manager/hooks.yaml
+      - MIG_PARTED_CONFIG_FILE=/etc/nvidia-mig-manager/config.yaml
+      - MIG_PARTED_SELECTED_CONFIG=all-2g.20gb
+    privileged: true
+    ipc: host
+    pid: host
+
+  redis:
+    image: "${REDIS_IMAGE}"
+    hostname: ${REDIS_SERVICE_HOST}
+    command: ["redis-server", "--appendonly", "no", "--maxmemory", "500mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:${REDIS_SERVICE_PORT}:${REDIS_SERVICE_PORT}"
+    deploy:
+      resources:
+        limits:
+          memory: 5G
+        reservations:
+          memory: 5G
+
+  rabbitmq:
+    image: "${RABBITMQ_IMAGE}"
+    hostname: ${RABBITMQ_SERVICE_HOST}
+    ports:
+      - "127.0.0.1:${RABBITMQ_SERVICE_PORT}:${RABBITMQ_SERVICE_PORT}"
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+
+  celery-worker-1:
+    image: "${APP_WORKER_IMAGE}"
+    command: bash -c "celery -A back.celery_client.client worker --pool=threads -l info --concurrency=1 -Q sd"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities:
+                - gpu
+                - utility # nvidia-smi
+                - compute # cuda
+    environment:
+      REDIS_SERVICE_HOST: ${REDIS_SERVICE_HOST}
+      REDIS_SERVICE_PORT: ${REDIS_SERVICE_PORT}
+      REDIS_DB: ${REDIS_DB}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_SERVICE_HOST: ${RABBITMQ_SERVICE_HOST}
+      RABBITMQ_SERVICE_PORT: ${RABBITMQ_SERVICE_PORT}
+      APP_RESULTS_CLEANUP_MINUTES: ${APP_RESULTS_CLEANUP_MINUTES}
+      BASE_MODEL_PATH: "./models/sdxl-turbo"
+      INPAINTING_MODEL_PATH: "./models/stable-diffusion-2-inpainting"
+      GOOGLE_KEY: ${GOOGLE_KEY}
+      LOAD_MODEL: True
+      NVIDIA_VISIBLE_DEVICES: "0:0"
+      MODEL_TYPE: "sd"
+    depends_on:
+      - nvidia-mig-parted
+    volumes:
+      - ../models:/app/models
+  
+  celery-worker-2:
+    image: "${APP_WORKER_IMAGE}"
+    command: bash -c "celery -A back.celery_client.client worker --pool=threads -l info --concurrency=1 -Q cn"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities:
+                - gpu
+                - utility # nvidia-smi
+                - compute # cuda
+    environment:
+      REDIS_SERVICE_HOST: ${REDIS_SERVICE_HOST}
+      REDIS_SERVICE_PORT: ${REDIS_SERVICE_PORT}
+      REDIS_DB: ${REDIS_DB}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_SERVICE_HOST: ${RABBITMQ_SERVICE_HOST}
+      RABBITMQ_SERVICE_PORT: ${RABBITMQ_SERVICE_PORT}
+      APP_RESULTS_CLEANUP_MINUTES: ${APP_RESULTS_CLEANUP_MINUTES}
+      BASE_MODEL_PATH: "./models/stable-diffusion-xl-base-1.0"
+      INPAINTING_MODEL_PATH: "./models/stable-diffusion-2-inpainting"
+      CONTROLNET_MODEL_PATH: "./models/controlnet-canny-sdxl-1.0"
+      VAE_MODEL_PATH: "./models/sdxl-vae-fp16-fix"
+      GOOGLE_KEY: ${GOOGLE_KEY}
+      LOAD_MODEL: True
+      NVIDIA_VISIBLE_DEVICES: "0:1"
+      MODEL_TYPE: "cn"
+    depends_on:
+      - nvidia-mig-parted
+    volumes:
+      - ../models:/app/models
+  
+  celery-worker-3:
+    image: "${APP_WORKER_IMAGE}"
+    command: bash -c "celery -A back.celery_client.client worker --pool=threads -l info --concurrency=1 -Q cn"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities:
+                - gpu
+                - utility # nvidia-smi
+                - compute # cuda
+    environment:
+      REDIS_SERVICE_HOST: ${REDIS_SERVICE_HOST}
+      REDIS_SERVICE_PORT: ${REDIS_SERVICE_PORT}
+      REDIS_DB: ${REDIS_DB}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_SERVICE_HOST: ${RABBITMQ_SERVICE_HOST}
+      RABBITMQ_SERVICE_PORT: ${RABBITMQ_SERVICE_PORT}
+      APP_RESULTS_CLEANUP_MINUTES: ${APP_RESULTS_CLEANUP_MINUTES}
+      BASE_MODEL_PATH: "./models/stable-diffusion-xl-base-1.0"
+      INPAINTING_MODEL_PATH: "./models/stable-diffusion-2-inpainting"
+      CONTROLNET_MODEL_PATH: "./models/controlnet-canny-sdxl-1.0"
+      VAE_MODEL_PATH: "./models/sdxl-vae-fp16-fix"
+      GOOGLE_KEY: ${GOOGLE_KEY}
+      LOAD_MODEL: True
+      NVIDIA_VISIBLE_DEVICES: "0:2"
+      MODEL_TYPE: "cn"
+    depends_on:
+      - nvidia-mig-parted
+    volumes:
+      - ../models:/app/models
+
+  celery-beat:
+    image: "${APP_SERVER_IMAGE}"
+    command: bash -c "celery -A back.celery_client.client beat -l error"
+    environment:
+      REDIS_SERVICE_HOST: ${REDIS_SERVICE_HOST}
+      REDIS_SERVICE_PORT: ${REDIS_SERVICE_PORT}
+      REDIS_DB: ${REDIS_DB}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_SERVICE_HOST: ${RABBITMQ_SERVICE_HOST}
+      RABBITMQ_SERVICE_PORT: ${RABBITMQ_SERVICE_PORT}
+      APP_RESULTS_CLEANUP_MINUTES: ${APP_RESULTS_CLEANUP_MINUTES}
+      GOOGLE_KEY: ${GOOGLE_KEY}
+      LOAD_MODEL: False
+
+  flask-server:
+    image: "${APP_SERVER_IMAGE}"
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      REDIS_SERVICE_HOST: ${REDIS_SERVICE_HOST}
+      REDIS_SERVICE_PORT: ${REDIS_SERVICE_PORT}
+      REDIS_DB: ${REDIS_DB}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_SERVICE_HOST: ${RABBITMQ_SERVICE_HOST}
+      RABBITMQ_SERVICE_PORT: ${RABBITMQ_SERVICE_PORT}
+      APP_RESULTS_CLEANUP_MINUTES: ${APP_RESULTS_CLEANUP_MINUTES}
+      GOOGLE_KEY: ${GOOGLE_KEY}
+      LOAD_MODEL: False
+    command: gunicorn back.app:rest_app --bind 0.0.0.0:5000
+
+  nginx:
+    image: "${NGINX_IMAGE}"
+    volumes:
+      - "./nginx/:/etc/nginx/templates/"
+      - ${SSL_CERTIFICATE_KEY}:/root/ssl/key.pem
+      - ${SSL_CERTIFICATE}:/root/ssl/cert.pem
+    environment:
+      APP_PORT_INTERNAL_HTTPS: 443
+      REST_APP_URL_INTERNAL: http://flask-server:5000
+      DOMAIN_NAME: ${DOMAIN_NAME}
+    ports:
+      - "443:443"
+    depends_on:
+      - flask-server
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "/docker-entrypoint.sh nginx -g 'daemon off;'",
+      ]

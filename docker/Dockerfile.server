@@ -1,0 +1,33 @@
+FROM python:3.10-slim
+
+ENV PYTHONUNBUFFERED True
+
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    build-essential \
+    software-properties-common \
+    cmake \
+    libboost-system-dev \
+    libboost-thread-dev \
+    libboost-program-options-dev \
+    libboost-test-dev \
+    libeigen3-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev
+
+WORKDIR /app
+
+COPY back/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY back/app.py back/app.py
+COPY back/celery_client.py back/celery_client.py
+COPY back/sd_task.py back/sd_task.py
+COPY back/cn_task.py back/cn_task.py
+COPY back/__init__.py back/__init__.py
+
+# Change such to match dev dir tree and configs
+WORKDIR /app
+ENV PYTHONPATH="."

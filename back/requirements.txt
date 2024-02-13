@@ -1,0 +1,13 @@
+flask
+flask-cors
+diffusers
+torch
+transformers
+celery
+pillow
+redis
+accelerate
+gunicorn
+xformers
+opencv-python
+onnxruntime
