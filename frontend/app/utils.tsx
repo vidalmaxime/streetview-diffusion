@@ -38,7 +38,7 @@ const taskBasedApiCall = async (
   const startTime = Date.now();
   var taskResultRequestResult;
   while (requestPending && !timeout) {
-    await sleep(100);
+    await sleep(1000);
     taskResultRequestResult = await axios
       .get(pollingUrl + "/" + report_id, taskResultRequestConfig)
       .catch((error) => {
