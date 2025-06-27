@@ -1,6 +1,6 @@
 # Panoramai
 
-This is the code for the [panoramai.xyz](https://panoramai.xyz) web app.
+This is the code for the panoramai web app (archived, details [here](https://www.maximevidal.com/writing/worldmaking-experiment.html)).
 
 ![panoramai](frontend/app/opengraph-image.jpg)
 
